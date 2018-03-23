@@ -3,6 +3,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"strconv"
 
@@ -14,12 +15,27 @@ type Request struct {
 	Value string `json:"value"`
 }
 
-func Handler(req Request) (string, error) {
+type Response struct {
+	Result string `json:"result"`
+}
+
+var NonPositiveID = fmt.Errorf("refusing to handle non-positive ID")
+
+func Handler(req Request) (Response, error) {
 
 	// stdout and stderr are sent to AWS CloudWatch Logs
 	log.Printf("Processing Lambda request: id=%d value=%s", req.ID, req.Value)
 
-	return "response for: id=" + strconv.Itoa(req.ID) + " value=" + req.Value, nil
+	resp := Response{}
+
+	if req.ID < 1 {
+		log.Print(NonPositiveID)
+		return resp, NonPositiveID
+	}
+
+	resp.Result = "response for: id=" + strconv.Itoa(req.ID) + " value=" + req.Value
+
+	return resp, nil
 }
 
 func main() {
